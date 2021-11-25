@@ -2,7 +2,6 @@ local Library = {Toggle = true, FirstTab = nil, TabCount = 0, ColorTable = {}}
 
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local function MakeDraggable(ClickObject, Object)
@@ -54,13 +53,13 @@ function Library:CreateWindow(Config)
 
 	if syn then
 		syn.protect_gui(Screen)
-		Screen.Parent = CoreGui
+		Screen.Parent = game:GetService("CoreGui")
 	elseif gethui then
 		Screen.Name =  HttpService:GenerateGUID(false) -- bcuz sw-m gethui "exists"
 		Screen.Parent = gethui()
 	else
 		Screen.Name =  HttpService:GenerateGUID(false)
-		Screen.Parent = CoreGui
+		Screen.Parent = game:GetService("CoreGui")
 	end
 	
 	Topbar.WindowName.Text = Config.WindowName
@@ -813,11 +812,11 @@ function Library:CreateChatLogs()
 
 	if syn then
 		syn.protect_gui(ChatlogsBracket)
-		ChatlogsBracket.Parent = CoreGui
+		ChatlogsBracket.Parent = game:GetService("CoreGui")
 	elseif gethui then
 		ChatlogsBracket.Parent = gethui()
 	else
-		ChatlogsBracket.Parent = CoreGui
+		ChatlogsBracket.Parent = game:GetService("CoreGui")
 	end
 
 	ChatlogsBracket.Name =  HttpService:GenerateGUID(false)
