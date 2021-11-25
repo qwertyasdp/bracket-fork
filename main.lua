@@ -2,6 +2,7 @@ local Library = {Toggle = true, FirstTab = nil, TabCount = 0, ColorTable = {}}
 
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local function MakeDraggable(ClickObject, Object)
@@ -38,7 +39,7 @@ local function MakeDraggable(ClickObject, Object)
 	end)
 end
 
-function Library:CreateWindow(ui_config)
+function Library:CreateWindow(Config)
 	local WindowInit = {}
 	local Folder = game:GetObjects("rbxassetid://8093200272")[1]
 	local Screen = Folder.Bracket:Clone()
@@ -53,16 +54,16 @@ function Library:CreateWindow(ui_config)
 
 	if syn then
 		syn.protect_gui(Screen)
-		Screen.Parent = game:GetService("CoreGui")
+		Screen.Parent = CoreGui
 	elseif gethui then
 		Screen.Name =  HttpService:GenerateGUID(false) -- bcuz sw-m gethui "exists"
 		Screen.Parent = gethui()
 	else
 		Screen.Name =  HttpService:GenerateGUID(false)
-		Screen.Parent = game:GetService("CoreGui")
+		Screen.Parent = CoreGui
 	end
 	
-	Topbar.WindowName.Text = ui_config.WindowName
+	Topbar.WindowName.Text = Config.WindowName
 
 	MakeDraggable(Topbar, Main)
 	local function CloseAll()
@@ -124,7 +125,7 @@ function Library:CreateWindow(ui_config)
 		Library.Toggle = State
 	end
 	local function ChangeColor(Color)
-		ui_config.Color = Color
+		Config.Color = Color
 		for i, v in pairs(Library.ColorTable) do
 			if v.BackgroundColor3 ~= Color3.fromRGB(50, 50, 50) then
 				v.BackgroundColor3 = Color
@@ -175,7 +176,7 @@ function Library:CreateWindow(ui_config)
 		TabButton.Name = Name .. " TB"
 		TabButton.Parent = TBContainer
 		TabButton.Title.Text = Name
-		TabButton.BackgroundColor3 = ui_config.Color
+		TabButton.BackgroundColor3 = Config.Color
 
 		table.insert(Library.ColorTable, TabButton)
 		Library.TabCount = Library.TabCount + 1
@@ -261,7 +262,7 @@ function Library:CreateWindow(ui_config)
 				table.insert(Library.ColorTable, Button)
 
 				Button.MouseButton1Down:Connect(function()
-					Button.BackgroundColor3 = ui_config.Color
+					Button.BackgroundColor3 = Config.Color
 				end)
 
 				Button.MouseButton1Up:Connect(function()
@@ -273,7 +274,7 @@ function Library:CreateWindow(ui_config)
 				end)
 
 				Button.MouseButton1Click:Connect(function()
-					Callback()
+					if Callback then Callback() end
 				end)
 
 				function ButtonInit:AddToolTip(Name)
@@ -303,19 +304,17 @@ function Library:CreateWindow(ui_config)
 				TextBox.Size = UDim2.new(1, -10, 0, TextBox.Title.TextBounds.Y + 25)
 
 				TextBox.Background.Input.FocusLost:Connect(function()
-					if NumbersOnly and not tonumber(TextBox.Background.Input.Text) then
+					if NumbersOnly and not tonumber(TextBox.Background.Input.Text) and Callback then
 						Callback(tonumber(TextBox.Background.Input.Text))
-						--TextBox.Background.Input.Text = ""
-					else
+                    elseif Callback then
 						Callback(TextBox.Background.Input.Text)
-						--TextBox.Background.Input.Text = ""
 					end
 				end)
 				function TextBoxInit:GetValue()
 					return TextBox.Background.Input.Text
 				end
 				function TextBoxInit:SetState(String)
-					Callback(String)
+                    if Callback then Callback(String) end
 					TextBox.Background.Input.Text = String
 				end
 				function TextBoxInit:AddToolTip(Name)
@@ -347,12 +346,12 @@ function Library:CreateWindow(ui_config)
 
 				function ToggleInit:SetState(State)
 					if State then
-						Toggle.Toggle.BackgroundColor3 = ui_config.Color
+						Toggle.Toggle.BackgroundColor3 = Config.Color
 					elseif not State then
 						Toggle.Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 					end
 					ToggleState = State
-					Callback(State)
+                    if Callback then Callback(State) end
 				end
 
 				Toggle.MouseButton1Click:Connect(function()
@@ -434,9 +433,7 @@ function Library:CreateWindow(ui_config)
 							if Key == Selected then
 								ToggleState = not ToggleState
 								ToggleInit:SetState(ToggleState)
-								if Callback then
-									Callback(Key)
-								end
+                                if Callback then Callback(Key) end
 							end
 						end
 					end)
@@ -463,7 +460,7 @@ function Library:CreateWindow(ui_config)
 				
 				Slider.Title.Text = Name
 				Slider.Slider.Bar.Size = UDim2.new(Min / Max, 0, 1, 0)
-				Slider.Slider.Bar.BackgroundColor3 = ui_config.Color
+				Slider.Slider.Bar.BackgroundColor3 = Config.Color
 				Slider.Value.PlaceholderText = tostring(Min / Max)
 				Slider.Title.Size = UDim2.new(1, 0, 0, Slider.Title.TextBounds.Y + 5)
 				Slider.Size = UDim2.new(1, -10, 0, Slider.Title.TextBounds.Y + 15)
@@ -480,13 +477,13 @@ function Library:CreateWindow(ui_config)
 					SliderValue = tonumber(string.format("%.2f", SliderValue))
 					GlobalSliderValue = SliderValue
 					Slider.Value.PlaceholderText = tostring(SliderValue)
-					Callback(GlobalSliderValue)
+                    if Callback then Callback(GlobalSliderValue) end
 				end
 				local function SetState(Value)
 					GlobalSliderValue = Value
 					Slider.Slider.Bar.Size = UDim2.new(Value / Max, 0, 1, 0)
 					Slider.Value.PlaceholderText = Value
-					Callback(Value)
+                    if Callback then Callback(Value) end
 				end
 				Slider.Value.FocusLost:Connect(function()
 					if not tonumber(Slider.Value.Text) then
@@ -500,7 +497,7 @@ function Library:CreateWindow(ui_config)
 					GlobalSliderValue = Slider.Value.Text
 					Slider.Slider.Bar.Size = UDim2.new(Slider.Value.Text / Max, 0, 1, 0)
 					Slider.Value.PlaceholderText = Slider.Value.Text
-					Callback(tonumber(Slider.Value.Text))
+                    if Callback then Callback(tonumber(Slider.Value.Text)) end
 					Slider.Value.Text = ""
 				end)
 
@@ -554,7 +551,7 @@ function Library:CreateWindow(ui_config)
 						GlobalSliderValue = Value
 						Slider.Slider.Bar.Size = UDim2.new(Value / Max, 0, 1, 0)
 						Slider.Value.PlaceholderText = Value
-						Callback(Value)
+                        if Callback then Callback(Value) end
 					end
 				else
 					SetState(DefaultLocal)
@@ -596,7 +593,7 @@ function Library:CreateWindow(ui_config)
 					Option.Parent = Dropdown.Container.Holder.Container
 
 					Option.Title.Text = OptionName
-					Option.BackgroundColor3 = ui_config.Color
+					Option.BackgroundColor3 = Config.Color
 					Option.Size = UDim2.new(1, 0, 0, Option.Title.TextBounds.Y + 5)
 					Dropdown.Container.Holder.Size = UDim2.new(1, -5, 0, Dropdown.Container.Holder.Container.ListLayout.AbsoluteContentSize.Y)
 					table.insert(Library.ColorTable, Option)
@@ -615,7 +612,7 @@ function Library:CreateWindow(ui_config)
 
 					Option.MouseButton1Click:Connect(function()
 						Dropdown.Container.Value.Text = OptionName
-						Callback(OptionName)
+                        if Callback then Callback(OptionName) end
 					end)
 				end
 				function DropdownInit:AddToolTip(Name)
@@ -639,7 +636,7 @@ function Library:CreateWindow(ui_config)
 					for _, Option in pairs(Dropdown.Container.Holder.Container:GetChildren()) do
 						if Option:IsA("TextButton") and string.find(Option.Name, Name) then
 							Dropdown.Container.Value.Text = Option.Name
-							Callback(Name)
+                            if Callback then Callback(Name) end
 						end
 					end
 				end
@@ -691,7 +688,7 @@ function Library:CreateWindow(ui_config)
 					Colorpicker.Color.BackgroundColor3 = Color3.fromHSV(ColorTable.Hue, ColorTable.Saturation, ColorTable.Value)
 					Pallete.GradientPallete.BackgroundColor3 = Color3.fromHSV(ColorTable.Hue, 1, 1)
 					Pallete.Input.InputBox.PlaceholderText = "RGB: " .. math.round(Colorpicker.Color.BackgroundColor3.R * 255) .. "," .. math.round(Colorpicker.Color.BackgroundColor3.G * 255) .. "," .. math.round(Colorpicker.Color.BackgroundColor3.B * 255)
-					if Colorpicker.Color.BackgroundColor3 then
+					if Colorpicker.Color.BackgroundColor3 and Callback then
 						Callback(Colorpicker.Color.BackgroundColor3)
 					end
 				end
@@ -768,7 +765,7 @@ function Library:CreateWindow(ui_config)
 						Saturation = Saturation,
 						Value = Value
 					}
-					if Color then
+					if Color and Callback then
 						Callback(Color)
 					end
 				end
@@ -816,11 +813,11 @@ function Library:CreateChatLogs()
 
 	if syn then
 		syn.protect_gui(ChatlogsBracket)
-		ChatlogsBracket.Parent = game:GetService("CoreGui")
+		ChatlogsBracket.Parent = CoreGui
 	elseif gethui then
 		ChatlogsBracket.Parent = gethui()
 	else
-		ChatlogsBracket.Parent = game:GetService("CoreGui")
+		ChatlogsBracket.Parent = CoreGui
 	end
 
 	ChatlogsBracket.Name =  HttpService:GenerateGUID(false)
